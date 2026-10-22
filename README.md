@@ -13,6 +13,7 @@ _G.PlatePauseRequested = false
 _G.CurrentPlateIndex = 1
 _G.Bringing = false
 _G.SelectedItemName = "Tất Cả Vật Phẩm"
+_G.SearchText = ""
 _G.HoldingGrab = false
 _G.HeldObjects = {}
 _G.BringConnection = nil
@@ -27,6 +28,7 @@ local CloseBtn = Instance.new("TextButton")
 local ContentFrame = Instance.new("Frame")
 local StartBtn = Instance.new("TextButton")
 local BringBtn = Instance.new("TextButton")
+local SearchBar = Instance.new("TextBox")
 local SelectBtn = Instance.new("TextButton")
 local RefreshBtn = Instance.new("TextButton")
 local PlateBtn = Instance.new("TextButton")
@@ -47,8 +49,8 @@ MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.5, -110, 0.5, -165)
-MainFrame.Size = UDim2.new(0, 220, 0, 330)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -180)
+MainFrame.Size = UDim2.new(0, 220, 0, 360)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
@@ -126,18 +128,30 @@ BringBtn.Name = "BringBtn"
 BringBtn.Parent = ContentFrame
 BringBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
 BringBtn.BorderSizePixel = 0
-BringBtn.Position = UDim2.new(0.05, 0, 0.13, 0)
+BringBtn.Position = UDim2.new(0.05, 0, 0.12, 0)
 BringBtn.Size = UDim2.new(0.9, 0, 0, 28)
 BringBtn.Font = Enum.Font.SourceSansBold
 BringBtn.Text = "Bring Item: TẮT"
 BringBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 BringBtn.TextSize = 13
 
+SearchBar.Name = "SearchBar"
+SearchBar.Parent = ContentFrame
+SearchBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+SearchBar.BorderSizePixel = 0
+SearchBar.Position = UDim2.new(0.05, 0, 0.22, 0)
+SearchBar.Size = UDim2.new(0.9, 0, 0, 25)
+SearchBar.Font = Enum.Font.SourceSans
+SearchBar.PlaceholderText = "🔍 Tìm kiếm vật phẩm để bring..."
+SearchBar.Text = ""
+SearchBar.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchBar.TextSize = 12
+
 SelectBtn.Name = "SelectBtn"
 SelectBtn.Parent = ContentFrame
 SelectBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 SelectBtn.BorderSizePixel = 0
-SelectBtn.Position = UDim2.new(0.05, 0, 0.24, 0)
+SelectBtn.Position = UDim2.new(0.05, 0, 0.31, 0)
 SelectBtn.Size = UDim2.new(0.55, 0, 0, 25)
 SelectBtn.Font = Enum.Font.SourceSansItalic
 SelectBtn.Text = "Chọn: Tất Cả ▼"
@@ -148,7 +162,7 @@ RefreshBtn.Name = "RefreshBtn"
 RefreshBtn.Parent = ContentFrame
 RefreshBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 RefreshBtn.BorderSizePixel = 0
-RefreshBtn.Position = UDim2.new(0.65, 0, 0.24, 0)
+RefreshBtn.Position = UDim2.new(0.65, 0, 0.31, 0)
 RefreshBtn.Size = UDim2.new(0.3, 0, 0, 25)
 RefreshBtn.Font = Enum.Font.SourceSans
 RefreshBtn.Text = "Làm Mới"
@@ -159,7 +173,7 @@ PlateBtn.Name = "PlateBtn"
 PlateBtn.Parent = ContentFrame
 PlateBtn.BackgroundColor3 = Color3.fromRGB(130, 50, 180)
 PlateBtn.BorderSizePixel = 0
-PlateBtn.Position = UDim2.new(0.05, 0, 0.35, 0)
+PlateBtn.Position = UDim2.new(0.05, 0, 0.40, 0)
 PlateBtn.Size = UDim2.new(0.9, 0, 0, 28)
 PlateBtn.Font = Enum.Font.SourceSansBold
 PlateBtn.Text = "Bring bằng Plate: BẮT ĐẦU"
@@ -170,7 +184,7 @@ HoldBtn.Name = "HoldBtn"
 HoldBtn.Parent = ContentFrame
 HoldBtn.BackgroundColor3 = Color3.fromRGB(180, 130, 0)
 HoldBtn.BorderSizePixel = 0
-HoldBtn.Position = UDim2.new(0.05, 0, 0.46, 0)
+HoldBtn.Position = UDim2.new(0.05, 0, 0.50, 0)
 HoldBtn.Size = UDim2.new(0.9, 0, 0, 28)
 HoldBtn.Font = Enum.Font.SourceSansBold
 HoldBtn.Text = "Hold Grab: TẮT"
@@ -181,7 +195,7 @@ FuelBtn.Name = "FuelBtn"
 FuelBtn.Parent = ContentFrame
 FuelBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
 FuelBtn.BorderSizePixel = 0
-FuelBtn.Position = UDim2.new(0.05, 0, 0.57, 0)
+FuelBtn.Position = UDim2.new(0.05, 0, 0.60, 0)
 FuelBtn.Size = UDim2.new(0.9, 0, 0, 28)
 FuelBtn.Font = Enum.Font.SourceSansBold
 FuelBtn.Text = "Easy Fuel"
@@ -203,7 +217,7 @@ DropdownScroller.Name = "DropdownScroller"
 DropdownScroller.Parent = ContentFrame
 DropdownScroller.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 DropdownScroller.BorderSizePixel = 1
-DropdownScroller.Position = UDim2.new(0.05, 0, 0.32, 0)
+DropdownScroller.Position = UDim2.new(0.05, 0, 0.39, 0)
 DropdownScroller.Size = UDim2.new(0.9, 0, 0, 120)
 DropdownScroller.Visible = false
 DropdownScroller.ZIndex = 5
@@ -256,6 +270,10 @@ NoBtn.TextSize = 13
 local OwnershipEvent = game:GetService("ReplicatedStorage").Systems.GrabSystem.Network.RequestNetworkOwnership
 local isMinimized = false
 
+SearchBar:GetPropertyChangedSignal("Text"):Connect(function()
+    _G.SearchText = string.lower(SearchBar.Text)
+end)
+
 MinBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
     if isMinimized then
@@ -264,7 +282,7 @@ MinBtn.MouseButton1Click:Connect(function()
         MinBtn.Text = "+"
     else
         ContentFrame.Visible = true
-        MainFrame.Size = UDim2.new(0, 220, 0, 330)
+        MainFrame.Size = UDim2.new(0, 220, 0, 360)
         MinBtn.Text = "-"
     end
 end)
@@ -336,8 +354,9 @@ local FuelBtn = ContentFrame:WaitForChild("FuelBtn")
 local Status = ContentFrame:WaitForChild("Status")
 local DropdownScroller = ContentFrame:WaitForChild("DropdownScroller")
 
-local InteractionEvent = game:GetService("ReplicatedStorage").Systems.BehaviorSystem.Network.Interaction
+local GrabEvent = game:GetService("ReplicatedStorage").Systems.GrabSystem.Network.RequestNetworkOwnership
 local DropEvent = game:GetService("ReplicatedStorage").Systems.GrabSystem.Network.DropNetworkOwnership
+local InteractionEvent = game:GetService("ReplicatedStorage").Systems.BehaviorSystem.Network.Interaction
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
@@ -409,8 +428,11 @@ BringBtn.MouseButton1Click:Connect(function()
             for i = 1, math.min(#objects, 500) do
                 local targetObject = objects[i]
                 if targetObject then
-                    local matchesFilter = (_G.SelectedItemName == "Tất Cả Vật Phẩm") or (targetObject.Name == _G.SelectedItemName)
-                    if matchesFilter then
+                    local nameLower = string.lower(targetObject.Name)
+                    local matchesSearch = (_G.SearchText == "") or (string.find(nameLower, _G.SearchText))
+                    local matchesDropdown = (_G.SelectedItemName == "Tất Cả Vật Phẩm") or (targetObject.Name == _G.SelectedItemName)
+                    
+                    if matchesSearch and matchesDropdown then
                         local mainPart = getPrimaryOrFirstPart(targetObject)
                         if mainPart and not mainPart.Anchored then
                             pcall(function()
@@ -462,8 +484,11 @@ PlateBtn.MouseButton1Click:Connect(function()
             _G.CurrentPlateIndex = i
             local targetObject = objects[i]
             if targetObject then
-                local matchesFilter = (_G.SelectedItemName == "Tất Cả Vật Phẩm") or (targetObject.Name == _G.SelectedItemName)
-                if matchesFilter then
+                local nameLower = string.lower(targetObject.Name)
+                local matchesSearch = (_G.SearchText == "") or (string.find(nameLower, _G.SearchText))
+                local matchesDropdown = (_G.SelectedItemName == "Tất Cả Vật Phẩm") or (targetObject.Name == _G.SelectedItemName)
+                
+                if matchesSearch and matchesDropdown then
                     pcall(function() InteractionEvent:FireServer(plate, "placeInPlate", targetObject) end)
                 end
             end
@@ -482,68 +507,52 @@ PlateBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
-local Metatable = getrawmetatable(game)
-local Namecall = Metatable.__namecall
-setreadonly(Metatable, false)
-
-Metatable.__namecall = newcclosure(function(Self, ...)
-    local Method = getnamecallmethod()
-    if _G.HoldingGrab and Self == DropEvent and (Method == "FireServer" or Method == "fireServer") then
-        local character = LocalPlayer.Character
-        local root = character and character:FindFirstChild("HumanoidRootPart")
-        if root then
-            local objects = workspace.Objects:GetChildren()
-            for i = 1, math.min(#objects, 500) do
-                local item = objects[i]
-                if item then
-                    local mainPart = getPrimaryOrFirstPart(item)
-                    if mainPart and mainPart:GetNetworkOwner() == LocalPlayer then
-                        if not _G.HeldObjects[item] then
-                            if item:IsA("Model") then
-                                _G.HeldObjects[item] = root.CFrame:ToObjectSpace(item:GetPivot())
-                            else
-                                _G.HeldObjects[item] = root.CFrame:ToObjectSpace(mainPart.CFrame)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        return nil
-    end
-    return Namecall(Self, ...)
-end)
-setreadonly(Metatable, true)
-
 HoldBtn.MouseButton1Click:Connect(function()
     _G.HoldingGrab = not _G.HoldingGrab
     if _G.HoldingGrab then
         HoldBtn.Text = "Hold Grab: BẬT"
         HoldBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        Status.Text = "Bấm thả đồ để ghim theo người..."
+        Status.Text = "Chu kỳ Drop & Grab siêu tốc hoạt động..."
         
         _G.HoldConnection = RunService.Heartbeat:Connect(function()
+            local objects = workspace.Objects:GetChildren()
             local character = LocalPlayer.Character
             local root = character and character:FindFirstChild("HumanoidRootPart")
             if not root then return end
             
-            for item, relativeCF in pairs(_G.HeldObjects) do
-                if item and item.Parent then
+            for i = 1, math.min(#objects, 500) do
+                if not _G.HoldingGrab then break end
+                local item = objects[i]
+                if item then
                     local mainPart = getPrimaryOrFirstPart(item)
                     if mainPart and not mainPart.Anchored then
                         pcall(function()
-                            mainPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                            mainPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-                            local targetCF = root.CFrame:ToWorldSpace(relativeCF)
-                            if item:IsA("Model") then
-                                item:PivotTo(targetCF)
-                            else
-                                mainPart.CFrame = targetCF
+                            if mainPart:GetNetworkOwner() == LocalPlayer then
+                                if not _G.HeldObjects[item] then
+                                    if item:IsA("Model") then
+                                        _G.HeldObjects[item] = root.CFrame:ToObjectSpace(item:GetPivot())
+                                    else
+                                        _G.HeldObjects[item] = root.CFrame:ToObjectSpace(mainPart.CFrame)
+                                    end
+                                end
+                                
+                                DropEvent:FireServer(item)
+                                GrabEvent:InvokeServer(item)
+                            end
+                            
+                            local relativeCF = _G.HeldObjects[item]
+                            if relativeCF then
+                                mainPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                                mainPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                                local targetCF = root.CFrame:ToWorldSpace(relativeCF)
+                                if item:IsA("Model") then
+                                    item:PivotTo(targetCF)
+                                else
+                                    mainPart.CFrame = targetCF
+                                end
                             end
                         end)
                     end
-                else
-                    _G.HeldObjects[item] = nil
                 end
             end
         end)
