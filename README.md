@@ -17,7 +17,6 @@ _G.HoldingGrab = false
 _G.HeldObjects = {}
 _G.BringConnection = nil
 _G.HoldConnection = nil
-_G.DropHookConnection = nil
 _G.TargetCFrame = CFrame.new(-99.4940567, 9.73970222, 63.4564552, 0.866007268, -0, -0.500031412, 0, 1, -0, 0.500031412, 0, 0.866007268)
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -281,7 +280,6 @@ YesBtn.MouseButton1Click:Connect(function()
     _G.HoldingGrab = false
     if _G.BringConnection then _G.BringConnection:Disconnect() _G.BringConnection = nil end
     if _G.HoldConnection then _G.HoldConnection:Disconnect() _G.HoldConnection = nil end
-    if _G.DropHookConnection then _G.DropHookConnection:Disconnect() _G.DropHookConnection = nil end
     ScreenGui:Destroy()
 end)
 
@@ -484,76 +482,68 @@ PlateBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
-HoldBtn.MouseButton1Click:Connect(function()
-    _G.HoldingGrab = not _G.HoldingGrab
-    if _G.HoldingGrab then
-        HoldBtn.Text = "Hold Grab: BẬT"
-        HoldBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        Status.Text = "Hold Grab: Chặn Drop & Ghim Vị Trí"
-        
-        local objects = workspace.Objects:GetChildren()
-        for i = 1, math.min(#objects, 500) do
-            local item = objects[i]
-            if item then
-                local mainPart = getPrimaryOrFirstPart(item)
-                if mainPart then
-                    _G.HeldObjects[item] = {lastOwner = mainPart:GetNetworkOwner(), relativeCF = nil}
-                end
-            end
-        end
-        
-        local Metatable = getrawmetatable(game)
-        local Namecall = Metatable.__namecall
-        setreadonly(Metatable, false)
-        
-        _G.DropHookConnection = true
-        Metatable.__namecall = newcclosure(function(Self, ...)
-            local Method = getnamecallmethod()
-            if _G.HoldingGrab and Self == DropEvent and (Method == "FireServer" or Method == "fireServer") then
-                return nil
-            end
-            return Namecall(Self, ...)
-        end)
-       setreadonly(Metatable, true)
-        
-        _G.HoldConnection = RunService.Heartbeat:Connect(function()
-            local character = LocalPlayer.Character
-            local root = character and character:FindFirstChild("HumanoidRootPart")
-            if not root then return end
+local Metatable = getrawmetatable(game)
+local Namecall = Metatable.__namecall
+setreadonly(Metatable, false)
+
+Metatable.__namecall = newcclosure(function(Self, ...)
+    local Method = getnamecallmethod()
+    if _G.HoldingGrab and Self == DropEvent and (Method == "FireServer" or Method == "fireServer") then
+        local character = LocalPlayer.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        if root then
             local objects = workspace.Objects:GetChildren()
             for i = 1, math.min(#objects, 500) do
                 local item = objects[i]
                 if item then
                     local mainPart = getPrimaryOrFirstPart(item)
-                    if mainPart and not mainPart.Anchored then
-                        local currentOwner = mainPart:GetNetworkOwner()
-                        local data = _G.HeldObjects[item] or {lastOwner = nil, relativeCF = nil}
-                        if data.lastOwner == LocalPlayer and currentOwner ~= LocalPlayer then
-                            if not data.relativeCF then
-                                if item:IsA("Model") then
-                                    data.relativeCF = root.CFrame:ToObjectSpace(item:GetPivot())
-                                else
-                                    data.relativeCF = root.CFrame:ToObjectSpace(mainPart.CFrame)
-                                end
+                    if mainPart and mainPart:GetNetworkOwner() == LocalPlayer then
+                        if not _G.HeldObjects[item] then
+                            if item:IsA("Model") then
+                                _G.HeldObjects[item] = root.CFrame:ToObjectSpace(item:GetPivot())
+                            else
+                                _G.HeldObjects[item] = root.CFrame:ToObjectSpace(mainPart.CFrame)
                             end
-                        elseif currentOwner == LocalPlayer then
-                            data.relativeCF = nil
-                        end
-                        data.lastOwner = currentOwner
-                        _G.HeldObjects[item] = data
-                        if data.relativeCF then
-                            pcall(function()
-                                mainPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                                mainPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-                                local targetCF = root.CFrame:ToWorldSpace(data.relativeCF)
-                                if item:IsA("Model") then
-                                    item:PivotTo(targetCF)
-                                else
-                                    mainPart.CFrame = targetCF
-                                end
-                            end)
                         end
                     end
+                end
+            end
+        end
+        return nil
+    end
+    return Namecall(Self, ...)
+end)
+setreadonly(Metatable, true)
+
+HoldBtn.MouseButton1Click:Connect(function()
+    _G.HoldingGrab = not _G.HoldingGrab
+    if _G.HoldingGrab then
+        HoldBtn.Text = "Hold Grab: BẬT"
+        HoldBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        Status.Text = "Bấm thả đồ để ghim theo người..."
+        
+        _G.HoldConnection = RunService.Heartbeat:Connect(function()
+            local character = LocalPlayer.Character
+            local root = character and character:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+            
+            for item, relativeCF in pairs(_G.HeldObjects) do
+                if item and item.Parent then
+                    local mainPart = getPrimaryOrFirstPart(item)
+                    if mainPart and not mainPart.Anchored then
+                        pcall(function()
+                            mainPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            mainPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                            local targetCF = root.CFrame:ToWorldSpace(relativeCF)
+                            if item:IsA("Model") then
+                                item:PivotTo(targetCF)
+                            else
+                                mainPart.CFrame = targetCF
+                            end
+                        end)
+                    end
+                else
+                    _G.HeldObjects[item] = nil
                 end
             end
         end)
@@ -563,7 +553,6 @@ HoldBtn.MouseButton1Click:Connect(function()
         Status.Text = "Đã tắt Hold Grab."
         if _G.HoldConnection then _G.HoldConnection:Disconnect() _G.HoldConnection = nil end
         _G.HeldObjects = {}
-        _G.DropHookConnection = nil
     end
 end)
 
